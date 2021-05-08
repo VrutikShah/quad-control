@@ -5,7 +5,34 @@ from utils import *
 import math
 
 
+class stats:
+    def __init__(self):
+        self.phi = ''
+        self.y = ''
+        self.x = ''
+        self.f1 = ''
+        self.f2 = ''
+    
+    def statUpdate(self,frame,quad_quad_obj):
+        cv2.putText(frame,self.phi,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+        self.phi = 'phi: ' + str(quad_quad_obj.getPhi())
+        cv2.putText(frame,self.phi,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,0),1)
 
+        cv2.putText(frame,self.y,(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+        self.y = 'y: ' + str(quad_quad_obj.y)
+        cv2.putText(frame,self.y,(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,0),1)
+        
+        cv2.putText(frame,self.x,(10,70),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+        self.x = 'x: ' + str(quad_quad_obj.x)
+        cv2.putText(frame,self.x,(10,70),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,0),1)
+
+        # cv2.putText(frame,self.y,(10,90),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+        # self.f1 = 'f1: ' + str(quad_quad_obj.f1)
+        # cv2.putText(frame,self.y,(10,90),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,0),1)
+
+        # cv2.putText(frame,self.y,(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+        # self.f2 = 'f2: ' + str(quad_quad_obj.f2)
+        # cv2.putText(frame,self.y,(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,0),1)
 
 class quad:
     def __init__(self):
@@ -16,7 +43,7 @@ class quad:
         self.I = 2.5*1e-4
 
         self.x = 300
-        self.y = 200
+        self.y = 400
         self.x1 = self.x-self.l
         self.y1 = self.y
         self.x2 = self.x+self.l
@@ -45,7 +72,8 @@ class quad:
         self.ydot = - math.sin(deg2rad(self.Phi)) * self.v - math.cos(deg2rad(self.Phi)) * self.w
 
     
-    def newState(self,frame):
+    def newState(self,frame,frame2):
+        
         cv2.line(frame,(self.x1,self.y1),(self.x2,self.y2),(255,255,255),self.thc)
         self.Phi %= 360
         rad = deg2rad(self.Phi)
@@ -58,8 +86,12 @@ class quad:
         self.x2 = x2
         self.y1 = y1
         self.y2 = y2
-    
+
+        self.y = (self.y1+self.y2)/2
+        self.x = (self.x1+self.x2)/2
+
         cv2.line(frame,(self.x1,self.y1),(self.x2,self.y2),(255,0,0),self.thc)
+        cv2.circle(frame2, (round(self.x),round(self.y2)), radius=0, color=(255, 0, 255), thickness=5)
     
 
     
@@ -108,36 +140,38 @@ class quad:
 
 
 
-def normalForces(obj):
-    return -(obj.f1 + obj.f2)/obj.m + obj.grav * math.cos(deg2rad(obj.Phi)) - obj.p * obj.v
+def normalForces(quad_obj):
+    return -(quad_obj.f1 + quad_obj.f2)/quad_obj.m + quad_obj.grav * math.cos(deg2rad(quad_obj.Phi)) - quad_obj.p * quad_obj.v
 
-def lateralForces(obj):
-    return obj.grav * math.sin(deg2rad(obj.Phi)) + obj.p * obj.w
+def lateralForces(quad_obj):
+    return quad_obj.grav * math.sin(deg2rad(quad_obj.Phi)) + quad_obj.p * quad_obj.w
 
-def update(obj,t):
-    obj.v = t * lateralForces(obj) + obj.v
-    obj.w = t * normalForces(obj) + obj.w
-    obj.p = t * obj.u2 / obj.I + obj.p
-    obj.Phi = obj.p * t + obj.Phi
+def update(quad_obj,t):
+    quad_obj.v = t * lateralForces(quad_obj) + quad_obj.v
+    quad_obj.w = t * normalForces(quad_obj) + quad_obj.w
+    quad_obj.p = t * quad_obj.u2 / quad_obj.I + quad_obj.p
+    quad_obj.Phi = quad_obj.p * t + quad_obj.Phi
 
-    obj.xdot = -math.cos(deg2rad(obj.Phi)) * obj.v + math.sin(deg2rad(obj.Phi)) * obj.w
-    obj.ydot = math.sin(deg2rad(obj.Phi)) * obj.v + math.cos(deg2rad(obj.Phi)) * obj.w
+    quad_obj.xdot = -math.cos(deg2rad(quad_obj.Phi)) * quad_obj.v + math.sin(deg2rad(quad_obj.Phi)) * quad_obj.w
+    quad_obj.ydot = math.sin(deg2rad(quad_obj.Phi)) * quad_obj.v + math.cos(deg2rad(quad_obj.Phi)) * quad_obj.w
 
-    obj.y = obj.ydot * t + obj.y
-    obj.x = obj.xdot * t + obj.x
+    quad_obj.y = quad_obj.ydot * t + quad_obj.y
+    quad_obj.x = quad_obj.xdot * t + quad_obj.x
 
-    obj.newState(frame)
-    # obj.Phi -= 0.2
-    print('w: {}, v: {}, xdot: {}'.format(obj.w,obj.v,obj.xdot))
+    quad_obj.newState(frame,frame2)
+    quad_obj.Phi += 0.2
+    quad_obj.f1 += 0.01
+    quad_obj.f2 += 0.01
+    # print('w: {}, v: {}, xdot: {}'.format(quad_obj.w,quad_obj.v,quad_obj.xdot))
 
 
-def statUpdate(frame,obj,text1,text2):
+def statUpdate(frame,quad_obj,text1,text2):
     cv2.putText(frame,text1,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),1)
-    text1 = 'phi: ' + str(obj.getPhi())
+    text1 = 'phi: ' + str(quad_obj.getPhi())
     cv2.putText(frame,text1,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(0,0,0),1)
 
     cv2.putText(frame,text2,(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),1)
-    text2 = 'y: ' + str(obj.y)
+    text2 = 'y: ' + str(quad_obj.y)
     cv2.putText(frame,text2,(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.7,(0,0,0),1)
     
     return text1,text2
@@ -146,32 +180,23 @@ def statUpdate(frame,obj,text1,text2):
 dim_x = 600
 dim_y = 700
 frame = np.ones((dim_y,dim_x,3),np.uint8)*255
-grav = 9.8
-
-obj = quad()
-
-text1 = 'phi: ' + str(obj.getPhi())
-text2 = 'y: 0'
-
+frame2 = np.ones((dim_y,dim_x,3),np.uint8)*0
+quad_obj = quad()
+stat_obj = stats()
 t = 0
 
-
-
+# text1 = 'phi: ' + str(quad_obj.getPhi())
+# text2 = 'y: 0'
 
 while t<30:
-    # if obj.getPhi() <= 89:
-    # cv2.putText(frame,text,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),1)
-    # text = 'phi: ' + str(obj.getPhi())
-    # cv2.putText(frame,text,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(0,0,0),1)
-    # y_vel,y_pos = basic_update(0.1,accn,y_pos,y_vel)
-    
-    text1,text2 = statUpdate(frame,obj,text1,text2)
-    
-    update(obj,0.1)
+    # text1,text2 = statUpdate(frame,quad_obj,text1,text2)
+
+    stat_obj.statUpdate(frame,quad_obj)
+    update(quad_obj,0.1)
     t+=.1
 
     time.sleep(0.02)
-    cv2.imshow('an',frame)
+    cv2.imshow('an',frame+frame2)
     k = cv2.waitKey(10)
     if k ==27:
         break
