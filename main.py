@@ -49,10 +49,10 @@ class quad:
         self.x2 = self.x+self.l
         self.y2 = self.y
         
-        self.Phi = -20
+        self.Phi = 0
 
-        self.f1 = 0.5
-        self.f2 = 0.5
+        self.f1 = 0.9
+        self.f2 = 0.9
 
         self.u2 = self.f2*self.l - self.f1*self.l
         self.u1 = self.f1 + self.f2
@@ -77,6 +77,11 @@ class quad:
         cv2.line(frame,(self.x1,self.y1),(self.x2,self.y2),(255,255,255),self.thc)
         self.Phi %= 360
         rad = deg2rad(self.Phi)
+        # self.x1 = round(- self.l * math.cos(rad) + self.x)
+        # self.x2 = round(+ self.l * math.cos(rad) + self.x)
+        # self.y1 = round(+ self.l * math.sin(rad) + self.y)
+        # self.y2 = round(- self.l * math.sin(rad) + self.y)
+        
         x1 = round(- self.l * math.cos(rad) + self.x)
         x2 = round(+ self.l * math.cos(rad) + self.x)
         y1 = round(+ self.l * math.sin(rad) + self.y)
@@ -159,23 +164,12 @@ def update(quad_obj,t):
     quad_obj.x = quad_obj.xdot * t + quad_obj.x
 
     quad_obj.newState(frame,frame2)
-    quad_obj.Phi += 0.2
-    quad_obj.f1 += 0.01
-    quad_obj.f2 += 0.01
-    # print('w: {}, v: {}, xdot: {}'.format(quad_obj.w,quad_obj.v,quad_obj.xdot))
+    # quad_obj.Phi += 0.2
+    # quad_obj.f1 += 0.01
+    # quad_obj.f2 += 0.01
+    print('w: {}, v: {}, xdot: {}, ydot: {}'.format(quad_obj.w,quad_obj.v,quad_obj.xdot,quad_obj.ydot))
 
 
-def statUpdate(frame,quad_obj,text1,text2):
-    cv2.putText(frame,text1,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),1)
-    text1 = 'phi: ' + str(quad_obj.getPhi())
-    cv2.putText(frame,text1,(10,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(0,0,0),1)
-
-    cv2.putText(frame,text2,(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),1)
-    text2 = 'y: ' + str(quad_obj.y)
-    cv2.putText(frame,text2,(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.7,(0,0,0),1)
-    
-    return text1,text2
-    
 
 dim_x = 600
 dim_y = 700
@@ -188,14 +182,14 @@ t = 0
 # text1 = 'phi: ' + str(quad_obj.getPhi())
 # text2 = 'y: 0'
 
-while t<30:
+while t<500:
     # text1,text2 = statUpdate(frame,quad_obj,text1,text2)
 
     stat_obj.statUpdate(frame,quad_obj)
     update(quad_obj,0.1)
     t+=.1
 
-    time.sleep(0.02)
+    # time.sleep(0.02)
     cv2.imshow('an',frame+frame2)
     k = cv2.waitKey(10)
     if k ==27:
