@@ -102,9 +102,9 @@ count = 0
 def netThrust():
     return obj.f1 + obj.f2 - grav
 
-def update():
-    thrust = netThrust()
-    y_vel = 
+# def update():
+#     thrust = netThrust()
+#     y_vel = 
 
 
 while True:
